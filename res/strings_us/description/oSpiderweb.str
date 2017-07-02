@@ -1,0 +1,36 @@
+STRINGTABLE oSpiderweb
+{
+		oSpiderweb  				"Spider Web";
+		RADIUS_WEB  				"Radius";
+		ANCHOR_POINTS_CNT 			"Anchor Points Number";
+		OBJECT_LIST					"Object List";
+		SUBDIVISION  				"Subdivision";
+		SEED_ID						"Seed";
+		ID_GRP_RADIAL 				"Radial";
+		RADII_CNT  					"Radii Number";
+		RND_CENTER_DISTANCE 		"Random Center Distance";
+		ID_GRP_SPIRAL 				"Spiral";
+		ID_GRP_OUT_SPIRAL			"Outside Spiral";
+		START_DISTANCE				"Start Distance";
+		OS_REVOLUTION_CNT 			"Revolution count";
+		OS_OFFSET_START 			"Offset Start";
+		OS_SPACE 					"Space";
+		OS_TURBULENCE 				"Turbulence";
+		OS_LENGTH_WEIGHT 			"Length Weight";
+
+
+
+		ID_GRP_CENTER_SPIRAL 			"Center Spiral";
+		CREATE_CENTRAL_SPIRAL		"Create Central Spiral";
+	    CS_REVOLUTION_CNT 			"Revolution count";
+	    CS_OFFSET_START 			"Offset Start";
+	    CS_SPACE 					"Space";
+	    CS_TURBULENCE 				"Turbulence";
+	    CS_LENGTH_WEIGHT 			"Length Weight";
+
+		ID_GRP_DISPLAY 				"Display";
+		DRAWPHERE 					"Show Sphere";
+		DRAWPLANE 					"Show Plane";
+
+
+}
