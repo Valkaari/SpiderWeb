@@ -915,7 +915,7 @@ class DisplaySpiderWeb(ComputeAndDisplay,object):
 class SPIDERWEB_GENERATOR(plugins.ObjectData):
     """docstring for SPIDERWEB_GENERATOR"""
    
-    HANDLECOUNT = 2
+    HANDLECOUNT = 1
 
     """
     def Message(self, node, type, data):
@@ -1042,7 +1042,11 @@ class SPIDERWEB_GENERATOR(plugins.ObjectData):
         return c4d.DRAWRESULT_OK
         
 
-    
+    def MakeEditable (self, op):
+        
+
+        return False
+
     def GetVirtualObjects(self, op, hierarchyhelp):
 
 
@@ -1094,9 +1098,25 @@ class SPIDERWEB_GENERATOR(plugins.ObjectData):
         objList = []
         if op[c4d.OBJECT_LIST] is not None:
             for cpt in xrange(op[c4d.OBJECT_LIST].GetObjectCount()):
-                objList.append(op[c4d.OBJECT_LIST].ObjectFromIndex(doc,cpt))
+                objList.append(op[c4d.OBJECT_LIST].ObjectFromIndex(doc,cpt).GetClone())
+        bc = c4d.BaseContainer()
 
-        if not swc._setObjectList(objList):
+        doc = c4d.documents.BaseDocument()
+        for obj in objList:
+            doc.InsertObject(obj)
+
+
+
+        res = c4d.utils.SendModelingCommand(
+                              command = c4d.MCOMMAND_MAKEEDITABLE,
+                              list = objList ,
+                              mode = c4d.MODELINGCOMMANDMODE_ALL,
+                              bc = bc,
+                              doc  = doc
+                             )
+        
+
+        if not swc._setObjectList(res):
             return container
                    
         
@@ -1134,7 +1154,7 @@ class SPIDERWEB_GENERATOR(plugins.ObjectData):
 if __name__ == "__main__":
     path, fn = os.path.split(__file__)
     bmp = bitmaps.BaseBitmap()
-    bmp.InitWith(os.path.join(path, "res", "icons" , "spiderweb.tif"))
+    bmp.InitWith(os.path.join(path, "res", "icons" , "spiderweb.png"))
     plugins.RegisterObjectPlugin(id=PLUGIN_ID, str="Py Spiderweb Generator",
                                 g=SPIDERWEB_GENERATOR,
                                 description="oSpiderweb", icon=bmp,
