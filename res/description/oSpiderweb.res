@@ -5,17 +5,18 @@ CONTAINER oSpiderweb
 
     GROUP ID_OBJECTPROPERTIES
     {
+        BOOL USE_RAYCAST {}
         REAL RADIUS_WEB {MIN 0.0;}
-        LONG ANCHOR_POINTS_CNT {MIN 0;}
+        LONG ANCHOR_POINTS_CNT {MIN 3; MAX 9;}
         IN_EXCLUDE OBJECT_LIST {}
 
-        LONG SUBDIVISION {MIN 0;}
-        LONG SEED_ID {MIN 0;}
+        LONG SUBDIVISION {MIN 1;}
+        LONG SEED_ID {MIN 1;}
 
         GROUP ID_GRP_RADIAL 
         {
             DEFAULT 1; 
-            LONG RADII_CNT {MIN 0;}
+            LONG RADII_CNT {MIN 1;}
             REAL RND_CENTER_DISTANCE {UNIT PERCENT;MIN 0.0; MAX 100.0;}
         }
         GROUP ID_GRP_SPIRAL

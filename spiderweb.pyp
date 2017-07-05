@@ -592,19 +592,23 @@ class ComputeSpiderWeb(ComputeAndDisplay, object):
     ##
     ## @return     
     ##
-    def _resolveSpiderWeb(self):
+    def _resolveSpiderWeb(self, useRayCast):
         #ancPoints and frame threads
         #
+
         anchorPoints = []
         hubMg = self.hubMg
-        anchorPoints  = self._castRay(self.hubMg,  self.radius, 12)  #default for anchors, 12 rays          
-        if len(anchorPoints)  > self.desiredAnchorsCnt:
-            #sorted the array and negligate the closer points
-            self.frameThread._setPoints( self._sortedValue(anchorPoints, self.desiredAnchorsCnt) ) 
-        else:
-            self.frameThread._setPoints(anchorPoints)
-        if self.frameThread._getAnchorCount() == 0:
+        if useRayCast:
+            anchorPoints  = self._castRay(self.hubMg,  self.radius, 12)  #default for anchors, 12 rays          
+            if len(anchorPoints)  > self.desiredAnchorsCnt:
+                #sorted the array and negligate the closer points
+                self.frameThread._setPoints( self._sortedValue(anchorPoints, self.desiredAnchorsCnt) ) 
+            else:
+                self.frameThread._setPoints(anchorPoints)
+
+        if self.frameThread._getAnchorCount() < 3:
             return False
+
 
         #support threads
         gv = self._getVector
@@ -917,15 +921,13 @@ class SPIDERWEB_GENERATOR(plugins.ObjectData):
    
     HANDLECOUNT = 1
 
-    """
-    def Message(self, node, type, data):
-
-        return True
-    """
+    
+        
     def Init(self, op):
 
         self.InitAttr(op, float, [c4d.RADIUS_WEB])
         self.InitAttr(op, int, [c4d.ANCHOR_POINTS_CNT])
+        self.InitAttr(op, bool, [c4d.USE_RAYCAST])
         self.InitAttr(op, int, [c4d.SUBDIVISION])
         self.InitAttr(op, int, [c4d.SEED_ID])
         self.InitAttr(op, int, [c4d.RADII_CNT])
@@ -948,6 +950,7 @@ class SPIDERWEB_GENERATOR(plugins.ObjectData):
 
         op[c4d.RADIUS_WEB] = 20
         op[c4d.ANCHOR_POINTS_CNT] = 5
+        op[c4d.USE_RAYCAST] = False
         op[c4d.SUBDIVISION] = 8
         op[c4d.SEED_ID] = 123456
         op[c4d.RADII_CNT] = 26
@@ -970,12 +973,7 @@ class SPIDERWEB_GENERATOR(plugins.ObjectData):
 
 
         return True
-    
-    """
-    def GetDimension(self, op, mp, rad):
-        #Return the boundaries of your object.
-        pass
-    """
+
 
     def GetHandleCount(self,op):
         #Called to get the number of handles the object has
@@ -1008,44 +1006,52 @@ class SPIDERWEB_GENERATOR(plugins.ObjectData):
             op[c4d.OS_SPACE] = utils.FCut(val, 0.0, sys.maxint)
         
 
-    """
-    def DetectHandle(self, op, bd, x, y, qualifier):
-        #Manually detect a click on a handle
-
-        return 0
-
-
-    def MoveHandle(self, op, undo, mouse_pos, hit_id, qualifier, bd):
-        #Move a handle manually
-
-        return True
-    """
 
     def Draw(self, op, drawpass, bd, bh):
         #Called when the display is updated for you to display some visual element of your op in the 3D view
         if drawpass!=c4d.DRAWPASS_HANDLES: return c4d.DRAWRESULT_SKIP
+        if op[c4d.USE_RAYCAST]:
+            rad = op[c4d.RADIUS_WEB]
+            space = op[c4d.OS_SPACE]
 
-        rad = op[c4d.RADIUS_WEB]
-        space = op[c4d.OS_SPACE]
+            bd.SetPen(c4d.GetViewColor(c4d.VIEWCOLOR_ACTIVEPOINT))
+            bd.SetMatrix_Matrix(op, bh.GetMg())
 
-        bd.SetPen(c4d.GetViewColor(c4d.VIEWCOLOR_ACTIVEPOINT))
-        bd.SetMatrix_Matrix(op, bh.GetMg())
-
-        info = c4d.HandleInfo()
-        for x in xrange(self.HANDLECOUNT):
-            self.GetHandle(op, x, info)
-            bd.DrawHandle(info.position, c4d.DRAWHANDLE_BIG, 0)
-            bd.DrawLine(info.position, c4d.Vector(0), 0)
+            info = c4d.HandleInfo()
+            for x in xrange(self.HANDLECOUNT):
+                self.GetHandle(op, x, info)
+                bd.DrawHandle(info.position, c4d.DRAWHANDLE_BIG, 0)
+                bd.DrawLine(info.position, c4d.Vector(0), 0)
 
 
 
         return c4d.DRAWRESULT_OK
-        
 
-    def MakeEditable (self, op):
-        
+    def GetDDescription(self, node, description, flags):
+        if not description.LoadDescription(node.GetType()):
+            return False
 
-        return False
+        singleID = description.GetSingleDescID()
+
+        paramID = c4d.DescID(c4d.USE_RAYCAST)
+        bc = c4d.BaseContainer()
+
+        if singleID is None or paramID.IsPartOf(singleID)[0]:
+            param =  description.GetParameterI(c4d.DescID(c4d.OBJECT_LIST), None)
+            if param:
+                param.SetBool(c4d.DESC_HIDE, not node[c4d.USE_RAYCAST])
+            param =  description.GetParameterI(c4d.DescID(c4d.RADIUS_WEB), None)
+            if param:
+                param.SetBool(c4d.DESC_HIDE, not node[c4d.USE_RAYCAST])
+            param =  description.GetParameterI(c4d.DescID(c4d.ANCHOR_POINTS_CNT), None)
+            if param:
+                param.SetBool(c4d.DESC_HIDE, not node[c4d.USE_RAYCAST])
+            
+          
+
+
+        return (True, flags | c4d.DESCFLAGS_DESC_LOADED)
+
 
     def GetVirtualObjects(self, op, hierarchyhelp):
 
@@ -1053,7 +1059,7 @@ class SPIDERWEB_GENERATOR(plugins.ObjectData):
         doc = c4d.documents.GetActiveDocument()
 
         container = c4d.BaseObject(c4d.Onull)
-        if op[c4d.DRAWPHERE]:
+        if op[c4d.DRAWPHERE] and op[c4d.USE_RAYCAST]:
             container[c4d.NULLOBJECT_DISPLAY] = 13
         container[c4d.NULLOBJECT_RADIUS] = op[c4d.RADIUS_WEB] 
         container[c4d.NULLOBJECT_ORIENTATION] = 1
@@ -1094,34 +1100,43 @@ class SPIDERWEB_GENERATOR(plugins.ObjectData):
 
             )
         #get the object list
+        if op[c4d.USE_RAYCAST]:
+            objList = []
+            if op[c4d.OBJECT_LIST] is not None:
+                for cpt in xrange(op[c4d.OBJECT_LIST].GetObjectCount()):
+                    objList.append(op[c4d.OBJECT_LIST].ObjectFromIndex(doc,cpt).GetClone())
+            else:
+                return container
+            # make editable objects.
+            bc = c4d.BaseContainer()
 
-        objList = []
-        if op[c4d.OBJECT_LIST] is not None:
-            for cpt in xrange(op[c4d.OBJECT_LIST].GetObjectCount()):
-                objList.append(op[c4d.OBJECT_LIST].ObjectFromIndex(doc,cpt).GetClone())
-        bc = c4d.BaseContainer()
+            doc = c4d.documents.BaseDocument()
+            for obj in objList:
+                doc.InsertObject(obj)
 
-        doc = c4d.documents.BaseDocument()
-        for obj in objList:
-            doc.InsertObject(obj)
-
-
-
-        res = c4d.utils.SendModelingCommand(
-                              command = c4d.MCOMMAND_MAKEEDITABLE,
-                              list = objList ,
-                              mode = c4d.MODELINGCOMMANDMODE_ALL,
-                              bc = bc,
-                              doc  = doc
-                             )
-        
-
-        if not swc._setObjectList(res):
-            return container
-                   
+            res = c4d.utils.SendModelingCommand(
+                                  command = c4d.MCOMMAND_MAKEEDITABLE,
+                                  list = objList ,
+                                  mode = c4d.MODELINGCOMMANDMODE_ALL,
+                                  bc = bc,
+                                  doc  = doc
+                                 )
+            
+            if not res:
+                return container
+            if not swc._setObjectList(res):
+                return container
+        else:
+            anchorPoints = []
+            child = op.GetDown()
+            while child is not None:
+                anchorPoints.append(child.GetRelPos())
+                child = child.GetNext()
+            swc.frameThread._setPoints(anchorPoints)
+            
         
         ##compute the spider web
-        if swc._resolveSpiderWeb() == False:
+        if swc._resolveSpiderWeb(op[c4d.USE_RAYCAST]) == False:
             return container
 
 

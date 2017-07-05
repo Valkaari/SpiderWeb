@@ -3,6 +3,7 @@ STRINGTABLE oSpiderweb
 		oSpiderweb  				"Spider Web";
 		RADIUS_WEB  				"Radius";
 		ANCHOR_POINTS_CNT 			"Anchor Points Number";
+		USE_RAYCAST					"Use Ray Cast";
 		OBJECT_LIST					"Object List";
 		SUBDIVISION  				"Subdivision";
 		SEED_ID						"Seed";
